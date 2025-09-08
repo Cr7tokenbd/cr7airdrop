@@ -287,15 +287,13 @@ function buildContestBlock() {
   const contestEndDate = new Date(CONTEST_END_MS).toLocaleDateString('en-GB');
   return (
 `🏆 Contest Progress
-• Total Spent: *${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL*
+• Total Spent: ${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL
 • ${makeProgressBar(percent)} ${percent.toFixed(2)}%
 • ⏳ Time left: ${formatTimeLeft()}
-• 📅 Contest ends: *${contestEndDate}*
+• 📅 Contest ends: ${contestEndDate}
 
 🚀 Official Launch: September 29, 2025 at 5 PM ET
-⏰ Presale ends at launch time
-
-🎯 Ready to participate?`
+⏰ Presale ends at launch time`
   );
 }
 
@@ -811,7 +809,7 @@ bot.onText(/\/contest/, async ctx => {
   const chatId = ctx.chat.id;
   
   if (!contestActive()) {
-    return bot.sendMessage(chatId, "⏰ *Contest has ended.*", { parse_mode: "Markdown" });
+    return bot.sendMessage(chatId, "⏰ Contest has ended.", { parse_mode: "Markdown" });
   }
   
   // Check if user is already participating
@@ -825,10 +823,10 @@ bot.onText(/\/contest/, async ctx => {
     const participant = existingParticipant[0];
     const contestProgress = buildContestBlock();
     const userStats = `
-🏆 *Your Contest Stats*
-• 💰 Total Spent: *${participant.total_spent.toFixed(4)} SOL*
-• 🎯 Rank: *#${participant.contest_rank || 'Not ranked yet'}*
-• 📅 Joined: *${new Date(participant.joined_at * 1000).toLocaleDateString()}*
+🏆 Your Contest Stats
+• 💰 Total Spent: ${participant.total_spent.toFixed(4)} SOL
+• 🎯 Rank: #${participant.contest_rank || 'Not ranked yet'}
+• 📅 Joined: ${new Date(participant.joined_at * 1000).toLocaleDateString()}
 
 ${contestProgress}`;
     
@@ -843,12 +841,12 @@ ${contestProgress}`;
   // New participant - ask for wallet
   const contestEndDate = new Date(CONTEST_END_MS).toLocaleDateString('en-GB');
   const prompt = await bot.sendMessage(chatId, 
-    `🏆 *Join $CR7 Contest!*\n\n` +
-    `💰 *How it works:*\n` +
+    `🏆 Join $CR7 Contest!\n\n` +
+    `💰 How it works:\n` +
     `• Send SOL to participate\n` +
     `• Higher spending = better rank\n` +
-    `• Contest ends: *${contestEndDate}*\n\n` +
-    `📝 *Send your Solana wallet address to join:*`,
+    `• Contest ends: ${contestEndDate}\n\n` +
+    `📝 Send your Solana wallet address to join:`,
     { parse_mode: "Markdown", reply_markup: { force_reply: true } }
   );
   
@@ -864,7 +862,7 @@ ${contestProgress}`;
       );
       
       await bot.sendMessage(reply.chat.id, 
-        `🎉 *Welcome to $CR7 Contest!*\n\n` +
+        `🎉 Welcome to $CR7 Contest!\n\n` +
         `✅ Wallet registered: \`${wallet}\`\n` +
         `💰 Start sending SOL to compete!\n` +
         `🏆 Use /contest to check your rank`,
@@ -881,7 +879,7 @@ bot.onText(/\/leaderboard/, async ctx => {
   const chatId = ctx.chat.id;
   
   if (!contestActive()) {
-    return bot.sendMessage(chatId, "⏰ *Contest has ended.*", { parse_mode: "Markdown" });
+    return bot.sendMessage(chatId, "⏰ Contest has ended.", { parse_mode: "Markdown" });
   }
   
   try {
@@ -891,10 +889,10 @@ bot.onText(/\/leaderboard/, async ctx => {
     );
     
     if (topParticipants.length === 0) {
-      return bot.sendMessage(chatId, "🏆 *No participants yet!*\n\nUse /contest to join!", { parse_mode: "Markdown" });
+      return bot.sendMessage(chatId, "🏆 No participants yet!\n\nUse /contest to join!", { parse_mode: "Markdown" });
     }
     
-    let leaderboard = "🏆 *$CR7 Contest Leaderboard*\n\n";
+    let leaderboard = "🏆 $CR7 Contest Leaderboard\n\n";
     
     topParticipants.forEach((participant, index) => {
       const username = participant.username ? `@${participant.username}` : "Anonymous";
@@ -906,7 +904,7 @@ bot.onText(/\/leaderboard/, async ctx => {
     });
     
     const contestEndDate = new Date(CONTEST_END_MS).toLocaleDateString('en-GB');
-    leaderboard += `📅 Contest ends: *${contestEndDate}*\n`;
+    leaderboard += `📅 Contest ends: ${contestEndDate}\n`;
     leaderboard += `🎯 Use /contest to join or check your rank!`;
     
     await bot.sendMessage(chatId, leaderboard, { parse_mode: "Markdown" });
