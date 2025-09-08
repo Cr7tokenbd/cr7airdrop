@@ -168,7 +168,12 @@ bot.onText(/\/start/, async ctx => {
   if (currentTime >= cfg.presaleEnd)
     return bot.sendMessage(chat, "⏰ Presale has ended!");
 
-  await bot.sendMessage(chat, msg.WELCOME, { parse_mode: "HTML" });
+  await bot.sendMessage(chat, msg.WELCOME, { 
+    parse_mode: "HTML",
+    reply_markup: { 
+      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/token-sale" }]] 
+    }
+  });
 
   const qrBuf   = await QRCode.toBuffer(cfg.motherWallet, { type: "png" });
   const caption = msg.makeProcess(cfg);
@@ -784,7 +789,14 @@ ${dynamicEmojis}
 
   /* send with image (if available) */
   const imgPath = findImage();
-  const opts = { caption, parse_mode: "HTML", disable_web_page_preview: true };
+  const opts = { 
+    caption, 
+    parse_mode: "HTML", 
+    disable_web_page_preview: true,
+    reply_markup: { 
+      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/token-sale" }]] 
+    }
+  };
 
   try {
     if (imgPath) await bot.sendPhoto(cfg.groupid, imgPath, opts);
@@ -820,7 +832,12 @@ bot.onText(/\/contest/, async ctx => {
 
 ${contestProgress}`;
     
-    return bot.sendMessage(chatId, userStats, { parse_mode: "Markdown" });
+    return bot.sendMessage(chatId, userStats, { 
+      parse_mode: "Markdown",
+      reply_markup: { 
+        inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/token-sale" }]] 
+      }
+    });
   }
   
   // New participant - ask for wallet
