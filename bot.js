@@ -205,14 +205,14 @@ bot.onText(/\/admin/, async ctx => {
     const editable = Object.keys(cfg)
       .filter(k => !["botToken", "adminIds"].includes(k));
 
-    const rows = editable.map(k => [{ text: `✏️ ${k}`, callback_data: `edit:${k}` }]);
-    rows.push([{ text: "🖼 Set image", callback_data: "setimage" }]);   // ← NEW button
-    rows.push([{ text: "📅 Set Presale Start Date", callback_data: "setstartdate" }]);
-    rows.push([{ text: "📅 Set Presale End Date", callback_data: "setenddate" }]);
-    rows.push([{ text: "🏆 Set Contest Start Date", callback_data: "setconteststart" }]);
-    rows.push([{ text: "🏆 Set Contest End Date", callback_data: "setcontestend" }]);
-    rows.push([{ text: "🔑 Set Private Key", callback_data: "setprivatekey" }]);
-    rows.push([{ text: "💰 Set Token Sender Wallet", callback_data: "settokensender" }]);
+  const rows = editable.map(k => [{ text: `✏️ ${k}`, callback_data: `edit:${k}` }]);
+  rows.push([{ text: "🖼 Set image", callback_data: "setimage" }]);   // ← NEW button
+  rows.push([{ text: "🏆 Set Contest Start Date", callback_data: "setconteststart" }]);
+  rows.push([{ text: "🏆 Set Contest End Date", callback_data: "setcontestend" }]);
+  rows.push([{ text: "🚀 Start Contest Now", callback_data: "startcontestnow" }]);
+  rows.push([{ text: "⏹️ End Contest Now", callback_data: "endcontestnow" }]);
+  rows.push([{ text: "🔑 Set Private Key", callback_data: "setprivatekey" }]);
+  rows.push([{ text: "💰 Set Token Sender Wallet", callback_data: "settokensender" }]);
 
     let summary = "*Current config* ```json\n";
     try {
@@ -292,7 +292,7 @@ const makeProgressBar = pct => {
 const contestActive = () => {
   const now = Date.now();
   const start = CONTEST_START_UNIX * 1000;
-  const end = start + CONTEST_DAYS * 86400 * 1000;
+  const end = CONTEST_END_MS;
   return now >= start && now <= end;
 };
 const formatTimeLeft = () => {
@@ -488,6 +488,47 @@ bot.on("callback_query", async ({ message, data, id }) => {
       chatId,
       "🏆 *Set Contest End Date*\n\nSend date in format: **DD/MM/YYYY**\nExample: `29/09/2025`",
       { parse_mode: "Markdown", reply_markup: { force_reply: true } }
+    );
+  }
+
+  /*  Start Contest Now button  */
+  if (data === "startcontestnow" && cfg.adminIds.includes(chatId)) {
+    await bot.answerCallbackQuery(id);
+    const now = Math.floor(Date.now() / 1000);
+    const endTime = now + (7 * 24 * 60 * 60); // 7 days from now
+    
+    cfg.contestStart = now;
+    cfg.contestEnd = endTime;
+    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+    reloadConfig();
+    
+    const startDate = new Date(now * 1000).toLocaleString();
+    const endDate = new Date(endTime * 1000).toLocaleString();
+    
+    await bot.sendMessage(chatId, 
+      `🚀 *Contest Started!*\n\n` +
+      `• Start: ${startDate}\n` +
+      `• End: ${endDate}\n` +
+      `• Duration: 7 days\n\n` +
+      `Contest is now ACTIVE!`,
+      { parse_mode: "Markdown" }
+    );
+  }
+
+  /*  End Contest Now button  */
+  if (data === "endcontestnow" && cfg.adminIds.includes(chatId)) {
+    await bot.answerCallbackQuery(id);
+    const now = Math.floor(Date.now() / 1000);
+    
+    cfg.contestEnd = now;
+    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+    reloadConfig();
+    
+    await bot.sendMessage(chatId, 
+      `⏹️ *Contest Ended!*\n\n` +
+      `Contest has been ended immediately.\n` +
+      `All commands will now show "Contest Ended".`,
+      { parse_mode: "Markdown" }
     );
   }
 
@@ -875,7 +916,7 @@ bot.onText(/\/contest/, async ctx => {
   const chatId = ctx.chat.id;
   
   if (!contestActive()) {
-    return bot.sendMessage(chatId, "⏰ Contest has ended.", { parse_mode: "Markdown" });
+    return bot.sendMessage(chatId, "🏆 Contest Ended", { parse_mode: "Markdown" });
   }
   
   // Show only contest progress bar and timing
@@ -894,7 +935,7 @@ bot.onText(/\/leaderboard/, async ctx => {
   const chatId = ctx.chat.id;
   
   if (!contestActive()) {
-    return bot.sendMessage(chatId, "⏰ Contest has ended.", { parse_mode: "Markdown" });
+    return bot.sendMessage(chatId, "🏆 Contest Ended", { parse_mode: "Markdown" });
   }
   
   try {
