@@ -879,64 +879,13 @@ bot.onText(/\/contest/, async ctx => {
     return bot.sendMessage(chatId, "⏰ Contest has ended.", { parse_mode: "Markdown" });
   }
   
-  // Check if user is already participating
-  const existingParticipant = await sqlAll(
-    `SELECT * FROM contest_participants WHERE tg_id = ?`,
-    [chatId]
-  );
+  // Show only contest progress bar and timing
+  const contestProgress = buildContestBlock();
   
-  if (existingParticipant.length > 0) {
-    // Show contest progress and user stats
-    const participant = existingParticipant[0];
-    const contestProgress = buildContestBlock();
-    const userStats = `
-🏆 Your Contest Stats
-• 💰 Total Spent: ${participant.total_spent.toFixed(4)} SOL
-• 🎯 Rank: #${participant.contest_rank || 'Not ranked yet'}
-• 📅 Joined: ${new Date(participant.joined_at * 1000).toLocaleDateString()}
-
-${contestProgress}`;
-    
-    return bot.sendMessage(chatId, userStats, { 
-      parse_mode: "Markdown",
-      reply_markup: { 
-        inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/" }]] 
-      }
-    });
-  }
-  
-  // New participant - ask for wallet
-  const contestEndDate = new Date(CONTEST_END_MS).toLocaleDateString('en-GB');
-  const prompt = await bot.sendMessage(chatId, 
-    `🏆 Join $CR7 Contest!\n\n` +
-    `💰 How it works:\n` +
-    `• Send SOL to participate\n` +
-    `• Higher spending = better rank\n` +
-    `• Contest ends: ${contestEndDate}\n\n` +
-    `📝 Send your Solana wallet address to join:`,
-    { parse_mode: "Markdown", reply_markup: { force_reply: true } }
-  );
-  
-  bot.onReplyToMessage(chatId, prompt.message_id, async reply => {
-    try {
-      const wallet = new PublicKey(reply.text).toBase58();
-      
-      // Add to contest participants
-      await sqlRun(
-        `INSERT OR IGNORE INTO contest_participants (tg_id, username, wallet, joined_at)
-         VALUES (?, ?, ?, strftime('%s','now'))`,
-        [reply.from.id, reply.from.username || "", wallet]
-      );
-      
-      await bot.sendMessage(reply.chat.id, 
-        `🎉 Welcome to $CR7 Contest!\n\n` +
-        `✅ Wallet registered: \`${wallet}\`\n` +
-        `💰 Start sending SOL to compete!\n` +
-        `🏆 Use /contest to check your rank`,
-        { parse_mode: "Markdown" }
-      );
-    } catch {
-      await bot.sendMessage(reply.chat.id, "❌ Invalid Solana address, try again.");
+  return bot.sendMessage(chatId, contestProgress, { 
+    parse_mode: "Markdown",
+    reply_markup: { 
+      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/" }]] 
     }
   });
 });
