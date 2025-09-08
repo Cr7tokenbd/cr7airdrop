@@ -190,29 +190,53 @@ const adminStates = new Map();   // chatId → { mode:'edit'|'setimage', key? }
 
 /* ───────── /admin ───────── */
 bot.onText(/\/admin/, async ctx => {
-  const chatId = ctx.chat.id;
-  if (!cfg.adminIds.includes(chatId)) return;
+  try {
+    const chatId = ctx.chat.id;
+    log("🔧 Admin command called by chatId:", chatId);
+    log("🔧 Admin IDs in config:", cfg.adminIds);
+    
+    if (!cfg.adminIds.includes(chatId)) {
+      log("❌ Access denied for chatId:", chatId);
+      return bot.sendMessage(chatId, "❌ Access denied. You are not an admin.");
+    }
 
-  const editable = Object.keys(cfg)
-    .filter(k => !["botToken", "adminIds"].includes(k));
+    log("✅ Admin access granted for chatId:", chatId);
 
-  const rows = editable.map(k => [{ text: `✏️ ${k}`, callback_data: `edit:${k}` }]);
-  rows.push([{ text: "🖼 Set image", callback_data: "setimage" }]);   // ← NEW button
-  rows.push([{ text: "📅 Set Presale Start Date", callback_data: "setstartdate" }]);
-  rows.push([{ text: "📅 Set Presale End Date", callback_data: "setenddate" }]);
-  rows.push([{ text: "🏆 Set Contest Start Date", callback_data: "setconteststart" }]);
-  rows.push([{ text: "🏆 Set Contest End Date", callback_data: "setcontestend" }]);
-  rows.push([{ text: "🔑 Set Private Key", callback_data: "setprivatekey" }]);
-  rows.push([{ text: "💰 Set Token Sender Wallet", callback_data: "settokensender" }]);
+    const editable = Object.keys(cfg)
+      .filter(k => !["botToken", "adminIds"].includes(k));
 
-  let summary = "*Current config* ```json\n";
-  summary += JSON.stringify(cfg, null, 2).slice(0, 3800);
-  summary += "\n```";
+    const rows = editable.map(k => [{ text: `✏️ ${k}`, callback_data: `edit:${k}` }]);
+    rows.push([{ text: "🖼 Set image", callback_data: "setimage" }]);   // ← NEW button
+    rows.push([{ text: "📅 Set Presale Start Date", callback_data: "setstartdate" }]);
+    rows.push([{ text: "📅 Set Presale End Date", callback_data: "setenddate" }]);
+    rows.push([{ text: "🏆 Set Contest Start Date", callback_data: "setconteststart" }]);
+    rows.push([{ text: "🏆 Set Contest End Date", callback_data: "setcontestend" }]);
+    rows.push([{ text: "🔑 Set Private Key", callback_data: "setprivatekey" }]);
+    rows.push([{ text: "💰 Set Token Sender Wallet", callback_data: "settokensender" }]);
 
-  await bot.sendMessage(chatId, summary + "\nSelect a field to edit ↓", {
-    parse_mode: "Markdown",
-    reply_markup: { inline_keyboard: rows }
-  });
+    let summary = "*Current config* ```json\n";
+    try {
+      summary += JSON.stringify(cfg, null, 2).slice(0, 3800);
+    } catch (jsonError) {
+      log("❌ Error stringifying config:", jsonError.message);
+      summary += "Error displaying config";
+    }
+    summary += "\n```";
+
+    await bot.sendMessage(chatId, summary + "\nSelect a field to edit ↓", {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: rows }
+    });
+    
+    log("✅ Admin panel sent successfully");
+  } catch (error) {
+    log("❌ Error in admin command:", error.message);
+    try {
+      await bot.sendMessage(ctx.chat.id, "❌ Error loading admin panel. Check logs for details.");
+    } catch (sendError) {
+      log("❌ Could not send error message:", sendError.message);
+    }
+  }
 });
 
 
@@ -341,10 +365,12 @@ function buildTokenBlock() {
 
 /* ───────── callback buttons ───────── */
 bot.on("callback_query", async ({ message, data, id }) => {
-  const chatId = message.chat.id;
+  try {
+    const chatId = message.chat.id;
+    log("🔘 Callback query received:", data, "from chatId:", chatId);
 
-  /*  Track button  */
-  if (data === "track") {
+    /*  Track button  */
+    if (data === "track") {
     await bot.answerCallbackQuery(id);
     const prompt = await bot.sendMessage(chatId, msg.askWallet, {
       reply_markup: { force_reply: true }
@@ -453,6 +479,14 @@ bot.on("callback_query", async ({ message, data, id }) => {
       "💰 *Set Token Sender Wallet*\n\nSend the wallet address that will send $CR7 tokens to users.\n\nThis should be the wallet that contains $CR7 tokens and SOL for fees.\n\nExample: `HZxHhrkB3FpEKUiUi2qYkyaf777z3T6h8ayNUBXqseNQ`",
       { parse_mode: "Markdown", reply_markup: { force_reply: true } }
     );
+  }
+  } catch (error) {
+    log("❌ Error in callback query handler:", error.message);
+    try {
+      await bot.answerCallbackQuery(id, { text: "❌ Error processing request" });
+    } catch (answerError) {
+      log("❌ Could not answer callback query:", answerError.message);
+    }
   }
 });
 
@@ -912,6 +946,23 @@ bot.onText(/\/leaderboard/, async ctx => {
     log("❌ Error showing leaderboard:", error.message);
     await bot.sendMessage(chatId, "❌ Error loading leaderboard. Try again later.");
   }
+});
+
+/* ───────── /testadmin ───────── */
+bot.onText(/\/testadmin/, async ctx => {
+  const chatId = ctx.chat.id;
+  log("🧪 Test admin command called by chatId:", chatId);
+  log("🧪 Current admin IDs:", cfg.adminIds);
+  log("🧪 Is admin?", cfg.adminIds.includes(chatId));
+  
+  await bot.sendMessage(chatId, 
+    `🧪 Admin Test Results:
+• Your Chat ID: \`${chatId}\`
+• Admin IDs: \`${JSON.stringify(cfg.adminIds)}\`
+• Is Admin: \`${cfg.adminIds.includes(chatId)}\`
+• Bot Token: \`${cfg.botToken ? 'Set' : 'Not Set'}\``,
+    { parse_mode: "Markdown" }
+  );
 });
 
 /* ───────── /updatecontest ───────── */
