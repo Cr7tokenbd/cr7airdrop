@@ -171,7 +171,7 @@ bot.onText(/\/start/, async ctx => {
   await bot.sendMessage(chat, msg.WELCOME, { 
     parse_mode: "HTML",
     reply_markup: { 
-      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com" }]] 
+      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com//" }]] 
     }
   });
 
@@ -794,7 +794,7 @@ ${dynamicEmojis}
     parse_mode: "HTML", 
     disable_web_page_preview: true,
     reply_markup: { 
-      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com" }]] 
+      inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/" }]] 
     }
   };
 
@@ -835,7 +835,7 @@ ${contestProgress}`;
     return bot.sendMessage(chatId, userStats, { 
       parse_mode: "Markdown",
       reply_markup: { 
-        inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com" }]] 
+        inline_keyboard: [[{ text: "BUY $CR7", url: "https://cr7officialsol.com/" }]] 
       }
     });
   }
