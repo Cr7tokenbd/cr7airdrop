@@ -340,8 +340,7 @@ function buildContestBlock() {
   
   if (contestEnded) {
     return (
-`🏆 Contest Ended
-• Final Total: ${pr.totalSol.toFixed(4)} SOL`
+`🏆 Contest Ended`
     );
   }
   
