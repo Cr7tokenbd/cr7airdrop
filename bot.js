@@ -304,20 +304,51 @@ const formatTimeLeft = () => {
   return `${d}d ${h}h ${m}m ${s}s`;
 };
 
+const formatPresaleTimeLeft = () => {
+  let ms = (cfg.presaleEnd * 1000) - Date.now();
+  if (ms <= 0) return "Presale Ended";
+  const d = Math.floor(ms / 864e5);   ms %= 864e5;
+  const h = Math.floor(ms / 36e5);    ms %= 36e5;
+  const m = Math.floor(ms / 6e4);     ms %= 6e4;
+  const s = Math.floor(ms / 1e3);
+  return `Presale Ends In:
+• 📅 ${d} days
+• 🕐 ${h}h
+• ⏱️ ${m}m ${s}s`;
+};
+
+const formatContestTimeLeft = () => {
+  let ms = CONTEST_END_MS - Date.now();
+  if (ms <= 0) return "🏆 Contest Ended";
+  const d = Math.floor(ms / 864e5);   ms %= 864e5;
+  const h = Math.floor(ms / 36e5);    ms %= 36e5;
+  const m = Math.floor(ms / 6e4);     ms %= 6e4;
+  const s = Math.floor(ms / 1e3);
+  return `Contest Ends In:
+• 📅 ${d} days
+• 🕐 ${h}h
+• ⏱️ ${m}m ${s}s`;
+};
+
 /* build current contest block */
 function buildContestBlock() {
   const pr      = loadProgress();
   const percent = Math.min((pr.totalSol / PROGRESS_SOL_CAP) * 100, 100);
-  const contestEndDate = new Date(CONTEST_END_MS).toLocaleDateString('en-GB');
+  const contestEnded = CONTEST_END_MS <= Date.now();
+  
+  if (contestEnded) {
+    return (
+`🏆 Contest Ended
+• Final Total: ${pr.totalSol.toFixed(4)} SOL`
+    );
+  }
+  
   return (
 `🏆 Contest Progress
 • Total Spent: ${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL
 • ${makeProgressBar(percent)} ${percent.toFixed(2)}%
-• ⏳ Time left: ${formatTimeLeft()}
-• 📅 Contest ends: ${contestEndDate}
 
-🚀 Official Launch: September 29, 2025 at 5 PM ET
-⏰ Presale ends at launch time`
+${formatContestTimeLeft()}`
   );
 }
 
