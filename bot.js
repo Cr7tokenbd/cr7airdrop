@@ -103,7 +103,7 @@ const reloadConfig = () => {
   PROGRESS_SOL_CAP   = cfg.progressSolCap || 100;
   CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
   CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
-  CONTEST_END_MS     = cfg.contestEnd * 1000;
+  CONTEST_END_MS     = (cfg.contestEnd || cfg.presaleEnd) * 1000;
 
   log("♻️  Config reloaded");
 };
@@ -248,7 +248,8 @@ bot.onText(/\/admin/, async ctx => {
 let PROGRESS_SOL_CAP   = cfg.progressSolCap || 100;                // ← from config
 let CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
 let CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
-let CONTEST_END_MS     = cfg.contestEnd * 1000;
+let CONTEST_END_MS     = (cfg.contestEnd || cfg.presaleEnd) * 1000;
+
 
 
 const progressFile = path.join(__dirname, "contest.json");
@@ -297,6 +298,7 @@ const contestActive = () => {
 const formatTimeLeft = () => {
   let ms = CONTEST_END_MS - Date.now();
   if (ms <= 0) return "0d 0h 0m 0s";
+  if (isNaN(ms) || !isFinite(ms)) return "Invalid time";
   const d = Math.floor(ms / 864e5);   ms %= 864e5;
   const h = Math.floor(ms / 36e5);    ms %= 36e5;
   const m = Math.floor(ms / 6e4);     ms %= 6e4;
@@ -348,7 +350,7 @@ function buildContestBlock() {
 • Total Spent: ${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL
 • ${makeProgressBar(percent)} ${percent.toFixed(2)}%
 
-⏳ Time left: ${formatTimeLeft()}`
+⏳ Contest Ends In : ${formatTimeLeft()}`
   );
 }
 
