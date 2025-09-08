@@ -1,0 +1,217 @@
+{
+  "deposit_sig": "3KJqXbqbkCFj4jwHBVevss5gTu87ag7Jc99HRYbQgKKa2aZt9avqL8SCfaTrB6ZHu4VjWXLLNSZeShfTkx28AuEL",
+  "steps": [
+    {
+      "ts": "2025-09-07T17:57:18.443Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T17:59:20.956Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:00:42.472Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:01:55.602Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:03:49.020Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:05:41.369Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:07:32.501Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:07:32.557Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-07T18:07:32.823Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:07:52.827Z",
+      "step": "send_attempt_2"
+    },
+    {
+      "ts": "2025-09-07T18:07:52.844Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:07:54.875Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:07:54.896Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-07T18:07:55.088Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:12.854Z",
+      "step": "send_attempt_3"
+    },
+    {
+      "ts": "2025-09-07T18:08:12.875Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:15.094Z",
+      "step": "send_attempt_2"
+    },
+    {
+      "ts": "2025-09-07T18:08:15.127Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:32.886Z",
+      "step": "send_attempt_4"
+    },
+    {
+      "ts": "2025-09-07T18:08:32.905Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:35.142Z",
+      "step": "send_attempt_3"
+    },
+    {
+      "ts": "2025-09-07T18:08:35.161Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:52.919Z",
+      "step": "send_attempt_5"
+    },
+    {
+      "ts": "2025-09-07T18:08:52.937Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:08:55.167Z",
+      "step": "send_attempt_4"
+    },
+    {
+      "ts": "2025-09-07T18:08:55.189Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:09:15.201Z",
+      "step": "send_attempt_5"
+    },
+    {
+      "ts": "2025-09-07T18:09:15.220Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:09:43.323Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:09:43.391Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-07T18:09:43.721Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:10:03.729Z",
+      "step": "send_attempt_2"
+    },
+    {
+      "ts": "2025-09-07T18:10:03.805Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:10:23.813Z",
+      "step": "send_attempt_3"
+    },
+    {
+      "ts": "2025-09-07T18:10:23.827Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:10:43.836Z",
+      "step": "send_attempt_4"
+    },
+    {
+      "ts": "2025-09-07T18:10:43.847Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:11:03.852Z",
+      "step": "send_attempt_5"
+    },
+    {
+      "ts": "2025-09-07T18:11:03.874Z",
+      "step": "send_fail",
+      "err": "Cannot read properties of null (reading 'publicKey')"
+    },
+    {
+      "ts": "2025-09-07T18:12:30.121Z",
+      "step": "start",
+      "sol": 0.21,
+      "from": "9HomuupxsdW3MAfsqD39KmCQ16VrRcJeCBkfDiAj5g5K"
+    },
+    {
+      "ts": "2025-09-07T18:12:30.138Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-07T18:12:30.154Z",
+      "step": "send_fail",
+      "err": "No wallet configured - cannot send tokens"
+    },
+    {
+      "ts": "2025-09-07T18:12:30.790Z",
+      "step": "db_processed"
+    },
+    {
+      "ts": "2025-09-07T18:12:33.470Z",
+      "step": "group_announced"
+    }
+  ]
+}

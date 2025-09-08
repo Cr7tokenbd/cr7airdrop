@@ -1,0 +1,51 @@
+{
+  "deposit_sig": "2BR5m7ek981xc3tAytNJsGyH68fa5jGDx1wrRsXjPFXqquqnVGtp2XRKTLfGLrXXXs8D6Ku8JGF61wcXgcfWioV5",
+  "steps": [
+    {
+      "ts": "2025-09-08T06:36:30.688Z",
+      "step": "start",
+      "sol": 0.2,
+      "from": "9avXkQNvDGqiViHaoLFjQH6Hb1uE1mr5y585KPSamvfB"
+    },
+    {
+      "ts": "2025-09-08T06:36:30.696Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-08T06:36:30.710Z",
+      "step": "send_fail",
+      "err": "No wallet configured - cannot send tokens"
+    },
+    {
+      "ts": "2025-09-08T06:36:30.760Z",
+      "step": "db_processed"
+    },
+    {
+      "ts": "2025-09-08T06:36:31.337Z",
+      "step": "group_announced"
+    },
+    {
+      "ts": "2025-09-08T07:24:48.345Z",
+      "step": "start",
+      "sol": 0.2,
+      "from": "9avXkQNvDGqiViHaoLFjQH6Hb1uE1mr5y585KPSamvfB"
+    },
+    {
+      "ts": "2025-09-08T07:24:48.356Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-08T07:24:48.369Z",
+      "step": "send_fail",
+      "err": "No wallet configured - cannot send tokens"
+    },
+    {
+      "ts": "2025-09-08T07:24:48.471Z",
+      "step": "db_processed"
+    },
+    {
+      "ts": "2025-09-08T07:24:49.097Z",
+      "step": "group_announced"
+    }
+  ]
+}

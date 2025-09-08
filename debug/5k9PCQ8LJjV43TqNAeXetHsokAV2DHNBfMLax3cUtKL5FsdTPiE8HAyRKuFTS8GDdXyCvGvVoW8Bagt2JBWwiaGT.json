@@ -1,0 +1,28 @@
+{
+  "deposit_sig": "5k9PCQ8LJjV43TqNAeXetHsokAV2DHNBfMLax3cUtKL5FsdTPiE8HAyRKuFTS8GDdXyCvGvVoW8Bagt2JBWwiaGT",
+  "steps": [
+    {
+      "ts": "2025-09-07T19:13:52.685Z",
+      "step": "start",
+      "sol": 0.22,
+      "from": "WVNXhQHe8L4nPbDctmsejXyY3XUVyrp7ARtxjBq7Ggf"
+    },
+    {
+      "ts": "2025-09-07T19:13:53.049Z",
+      "step": "send_attempt_1"
+    },
+    {
+      "ts": "2025-09-07T19:13:53.060Z",
+      "step": "send_fail",
+      "err": "No wallet configured - cannot send tokens"
+    },
+    {
+      "ts": "2025-09-07T19:13:53.289Z",
+      "step": "db_processed"
+    },
+    {
+      "ts": "2025-09-07T19:13:54.345Z",
+      "step": "group_announced"
+    }
+  ]
+}
