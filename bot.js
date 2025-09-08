@@ -198,7 +198,7 @@ function buildContestBlock() {
   const pr      = loadProgress();
   const percent = Math.min((pr.totalSol / PROGRESS_SOL_CAP) * 100, 100);
   return (
-`*Contest Progress*
+`Contest Progress
 • Total Spent: *${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL*
 • ${makeProgressBar(percent)} ${percent.toFixed(2)}%
 • ⏳ Time left: ${formatTimeLeft()}`
@@ -551,6 +551,12 @@ async function processLoop() {
     /* 1) Insert deposits  */
     for (const tx of transfers) {
       const sig = tx.signature;
+      
+      // Only process transactions from after presale start time
+      if (tx.timestamp < cfg.presaleStart) {
+        continue;
+      }
+      
       for (const tr of tx.nativeTransfers) {
         if (tr.toUserAccount !== cfg.motherWallet) continue;
         const sol = tr.amount / LAMPORTS_PER_SOL;
@@ -583,6 +589,14 @@ for (const dep of pending) {
   const depSig = dep.signature;
   trace(depSig, "start", { sol: dep.amount_sol, from: dep.from_addr });
 
+  // Skip if transaction is before presale start time
+  if (dep.ts < cfg.presaleStart) {
+    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
+    trace(depSig, "skipped_before_presale_start");
+    log(`⏭️ Skipping transaction before presale start: ${depSig}`);
+    continue;
+  }
+
   /* ---- SKIP if already rewarded (safety when bot restarts) ---- */
   if (await tokenSvc.isDepositRewarded(depSig)) {
     await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
@@ -594,6 +608,32 @@ for (const dep of pending) {
   const u   = await sqlAll(`SELECT tg_id, username FROM users WHERE wallet = ?`, [dep.from_addr]);
   const tgId = u[0]?.tg_id;
   const uname= u[0]?.username ?? "";
+
+  /* ---- DOUBLE CHECK: Ensure no duplicate reward for this wallet ---- */
+  const existingReward = await sqlAll(
+    `SELECT signature FROM sent WHERE to_address = ? AND amount = ?`,
+    [dep.from_addr, trw]
+  );
+  
+  if (existingReward.length > 0) {
+    log(`⚠️ Duplicate reward detected for wallet ${dep.from_addr}, amount ${trw}. Skipping.`);
+    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
+    trace(depSig, "duplicate_reward_skipped");
+    continue;
+  }
+
+  /* ---- TRIPLE CHECK: Ensure no pending processing for same wallet+amount ---- */
+  const pendingForSameWallet = await sqlAll(
+    `SELECT signature FROM deposits WHERE from_addr = ? AND amount_sol = ? AND processed = 0 AND signature != ?`,
+    [dep.from_addr, dep.amount_sol, depSig]
+  );
+  
+  if (pendingForSameWallet.length > 0) {
+    log(`⚠️ Another transaction pending for same wallet ${dep.from_addr}, amount ${dep.amount_sol}. Skipping this one.`);
+    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
+    trace(depSig, "duplicate_pending_skipped");
+    continue;
+  }
 
   /* ---- RETRY ONLY THE ON-CHAIN TRANSFER ---- */
   let sendSig, attempt = 0;
@@ -648,8 +688,34 @@ for (const dep of pending) {
     setTimeout(processLoop, (cfg.loopSeconds || 120) * 1000);
   }
 }
-processLoop();
-log("🔄 Processing loop launched");
+// Startup safety check
+async function startupCheck() {
+  log("🚀 Bot starting up - performing safety checks...");
+  
+  // Check if there are any unprocessed deposits that might be duplicates
+  const unprocessed = await sqlAll(`SELECT COUNT(*) as count FROM deposits WHERE processed = 0`);
+  if (unprocessed[0].count > 0) {
+    log(`⚠️ Found ${unprocessed[0].count} unprocessed deposits. Checking for duplicates...`);
+    
+    // Check each unprocessed deposit against the sent table
+    const pending = await sqlAll(`SELECT * FROM deposits WHERE processed = 0`);
+    for (const dep of pending) {
+      const alreadyRewarded = await tokenSvc.isDepositRewarded(dep.signature);
+      if (alreadyRewarded) {
+        log(`✅ Marking duplicate deposit as processed: ${dep.signature}`);
+        await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [dep.signature]);
+      }
+    }
+  }
+  
+  log("✅ Startup safety check completed");
+}
+
+// Run startup check before starting the main loop
+startupCheck().then(() => {
+  processLoop();
+  log("🔄 Processing loop launched");
+});
 
 /*  Keep alive on polling errors  */
 bot.on("polling_error", e => log("polling_error:", e.message));
