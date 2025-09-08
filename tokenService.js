@@ -40,6 +40,14 @@ class TokenService {
       try {
         this.wallet   = Keypair.fromSecretKey(decode(cfg.seed));
         this.ownerStr = this.wallet.publicKey.toBase58();
+        
+        // Check if this wallet matches the token sender wallet
+        if (cfg.tokenSenderWallet && this.ownerStr !== cfg.tokenSenderWallet) {
+          log(`⚠️ Private key wallet (${this.ownerStr}) doesn't match token sender wallet (${cfg.tokenSenderWallet})`);
+          log('⚠️ Bot will run in read-only mode - please provide correct private key');
+          this.wallet = null;
+          this.ownerStr = null;
+        }
       } catch (e) {
         log('⚠️ Invalid private key, bot will run in read-only mode');
         this.wallet = null;
