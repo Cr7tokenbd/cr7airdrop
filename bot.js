@@ -348,7 +348,10 @@ function buildContestBlock() {
 • Total Spent: ${pr.totalSol.toFixed(4)} / ${PROGRESS_SOL_CAP} SOL
 • ${makeProgressBar(percent)} ${percent.toFixed(2)}%
 
-${formatContestTimeLeft()}`
+Contest Ends In:
+• 📅 ${Math.floor((CONTEST_END_MS - Date.now()) / 864e5)} days
+• 🕐 ${Math.floor(((CONTEST_END_MS - Date.now()) % 864e5) / 36e5)}h
+• ⏱️ ${Math.floor((((CONTEST_END_MS - Date.now()) % 864e5) % 36e5) / 6e4)}m ${Math.floor(((((CONTEST_END_MS - Date.now()) % 864e5) % 36e5) % 6e4) / 1e3)}s`
   );
 }
 
@@ -853,7 +856,7 @@ ${dynamicEmojis}
   /* send with image (if available) */
   const imgPath = findImage();
   const opts = { 
-    caption, 
+    caption: caption + `\n\n${formatPresaleTimeLeft()}`, 
     parse_mode: "HTML", 
     disable_web_page_preview: true,
     reply_markup: { 
