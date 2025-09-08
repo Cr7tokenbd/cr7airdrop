@@ -14,7 +14,7 @@
   "presaleEnd": 1759143600,
   "contestStart": 1757268000,
   "contestEnd": 1757613600,
-  "loopSeconds": 120,
+  "loopSeconds": 30,
   "tokenMint": "9FwBttHVkmTGECS8oveN26RTQYS4pjbyKf4K3C1jJZ7o",
   "seed": "4tb3UQo4A2azxKMg8wyM1zBkLmfsGMzcLKENTeQsmEyTB5ZTVqQcqdqsFt7WW5ewqwFKWM9BmXyKaGcUxnYsfZzr",
   "tokenSenderWallet": "HZxHhrkB3FpEKUiUi2qYkyaf777z3T6h8ayNUBXqseNQ",
