@@ -266,16 +266,22 @@ const saveProgress = obj =>
 
 const loadBlockedWallets = () => {
   // Check environment variable first
+  log(`🔍 Checking environment variable BLOCKED_WALLETS: ${process.env.BLOCKED_WALLETS ? 'EXISTS' : 'NOT_FOUND'}`);
+  
   if (process.env.BLOCKED_WALLETS) {
     const blockedWallets = process.env.BLOCKED_WALLETS.split(',').map(w => w.trim());
+    log(`🔒 Loaded ${blockedWallets.length} blocked wallets from environment variable`);
     return { blockedWallets };
   }
   
   // Fallback to file
   if (!fs.existsSync(blockedWalletsFile)) {
+    log(`⚠️ No blocked wallets found - using empty list`);
     return { blockedWallets: [] };
   }
-  return JSON.parse(fs.readFileSync(blockedWalletsFile, "utf8"));
+  const fileData = JSON.parse(fs.readFileSync(blockedWalletsFile, "utf8"));
+  log(`🔒 Loaded ${fileData.blockedWallets.length} blocked wallets from file`);
+  return fileData;
 };
 
 /* track total + “spent ≥ 1 SOL at once” wallets */
