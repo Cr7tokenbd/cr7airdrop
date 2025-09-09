@@ -104,11 +104,6 @@ const reloadConfig = () => {
   CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
   CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
   CONTEST_END_MS     = (cfg.contestEnd || cfg.presaleEnd) * 1000;
-  
-  // Initialize presaleEndDisabled if not set
-  if (cfg.presaleEndDisabled === undefined) {
-    cfg.presaleEndDisabled = false;
-  }
 
   log("♻️  Config reloaded");
 };
@@ -170,7 +165,7 @@ bot.onText(/\/start/, async ctx => {
   const currentTime = Math.floor(Date.now() / 1e3);
   if (currentTime < cfg.presaleStart)
     return bot.sendMessage(chat, "🚀 Presale hasn't started yet!");
-  if (!cfg.presaleEndDisabled && currentTime >= cfg.presaleEnd)
+  if (currentTime >= cfg.presaleEnd)
     return bot.sendMessage(chat, "⏰ Presale has ended!");
 
   await bot.sendMessage(chat, msg.WELCOME, { 
@@ -216,11 +211,8 @@ bot.onText(/\/admin/, async ctx => {
   rows.push([{ text: "🏆 Set Contest End Date", callback_data: "setcontestend" }]);
   rows.push([{ text: "🚀 Start Contest Now", callback_data: "startcontestnow" }]);
   rows.push([{ text: "⏹️ End Contest Now", callback_data: "endcontestnow" }]);
-  rows.push([{ text: "⏰ Extend Contest Time", callback_data: "extendcontest" }]);
   rows.push([{ text: "🔑 Set Private Key", callback_data: "setprivatekey" }]);
   rows.push([{ text: "💰 Set Token Sender Wallet", callback_data: "settokensender" }]);
-  rows.push([{ text: "⏰ Disable Presale End", callback_data: "disablepresaleend" }]);
-  rows.push([{ text: "⏰ Enable Presale End", callback_data: "enablepresaleend" }]);
 
     let summary = "*Current config* ```json\n";
     try {
@@ -303,12 +295,6 @@ const contestActive = () => {
   const end = CONTEST_END_MS;
   return now >= start && now <= end;
 };
-
-const contestWillStart = () => {
-  const now = Date.now();
-  const start = CONTEST_START_UNIX * 1000;
-  return now < start;
-};
 const formatTimeLeft = () => {
   let ms = CONTEST_END_MS - Date.now();
   if (ms <= 0) return "0d 0h 0m 0s";
@@ -321,10 +307,6 @@ const formatTimeLeft = () => {
 };
 
 const formatPresaleTimeLeft = () => {
-  if (cfg.presaleEndDisabled) {
-    return ""; // Return empty string when presale is disabled
-  }
-  
   let ms = (cfg.presaleEnd * 1000) - Date.now();
   if (ms <= 0) return "Presale Ended";
   const d = Math.floor(ms / 864e5);   ms %= 864e5;
@@ -538,35 +520,15 @@ bot.on("callback_query", async ({ message, data, id }) => {
     await bot.answerCallbackQuery(id);
     const now = Math.floor(Date.now() / 1000);
     
-    // If contest is scheduled for future, set end time to start time (effectively canceling it)
-    if (cfg.contestStart > now) {
-      cfg.contestEnd = cfg.contestStart; // Set end = start to cancel future contest
-    } else {
-      cfg.contestEnd = now; // End current contest immediately
-    }
-    
+    cfg.contestEnd = now;
     fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
     reloadConfig();
     
-    const endDate = new Date(cfg.contestEnd * 1000).toLocaleDateString('en-GB');
-    
     await bot.sendMessage(chatId, 
       `⏹️ *Contest Ended!*\n\n` +
-      `Contest has been ended/canceled.\n` +
-      `End date: ${endDate}\n` +
+      `Contest has been ended immediately.\n` +
       `All commands will now show "Contest Ended".`,
       { parse_mode: "Markdown" }
-    );
-  }
-
-  /*  Extend Contest Time button  */
-  if (data === "extendcontest" && cfg.adminIds.includes(chatId)) {
-    await bot.answerCallbackQuery(id);
-    adminStates.set(chatId, { mode: "extendcontest" });
-    await bot.sendMessage(
-      chatId,
-      "⏰ *Extend Contest Time*\n\nHow many days to extend the contest?\n\nSend a number (e.g., `3` for 3 days)\n\nCurrent end: " + new Date(cfg.contestEnd * 1000).toLocaleDateString('en-GB'),
-      { parse_mode: "Markdown", reply_markup: { force_reply: true } }
     );
   }
 
@@ -589,39 +551,6 @@ bot.on("callback_query", async ({ message, data, id }) => {
       chatId,
       "💰 *Set Token Sender Wallet*\n\nSend the wallet address that will send $CR7 tokens to users.\n\nThis should be the wallet that contains $CR7 tokens and SOL for fees.\n\nExample: `HZxHhrkB3FpEKUiUi2qYkyaf777z3T6h8ayNUBXqseNQ`",
       { parse_mode: "Markdown", reply_markup: { force_reply: true } }
-    );
-  }
-
-  /*  Disable Presale End button  */
-  if (data === "disablepresaleend" && cfg.adminIds.includes(chatId)) {
-    await bot.answerCallbackQuery(id);
-    cfg.presaleEndDisabled = true;
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    reloadConfig();
-    
-    await bot.sendMessage(chatId, 
-      `✅ *Presale End Disabled!*\n\n` +
-      `⏰ Presale end timing has been disabled.\n` +
-      `🚀 Users can now buy tokens indefinitely until manually re-enabled.\n\n` +
-      `Use "Enable Presale End" to restore timing controls.`,
-      { parse_mode: "Markdown" }
-    );
-  }
-
-  /*  Enable Presale End button  */
-  if (data === "enablepresaleend" && cfg.adminIds.includes(chatId)) {
-    await bot.answerCallbackQuery(id);
-    cfg.presaleEndDisabled = false;
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    reloadConfig();
-    
-    const presaleEndDate = new Date(cfg.presaleEnd * 1000).toLocaleDateString('en-GB');
-    await bot.sendMessage(chatId, 
-      `✅ *Presale End Enabled!*\n\n` +
-      `⏰ Presale end timing has been restored.\n` +
-      `📅 Presale will end on: ${presaleEndDate}\n\n` +
-      `Use "Disable Presale End" to remove timing restrictions.`,
-      { parse_mode: "Markdown" }
     );
   }
   } catch (error) {
@@ -803,35 +732,6 @@ bot.on("message", async msg => {
     }
   }
 
-  /*  ── 8) Extend Contest Time ── */
-  if (state.mode === "extendcontest") {
-    const days = Number(msg.text.trim());
-    
-    if (Number.isNaN(days) || days <= 0) {
-      return bot.sendMessage(chatId, "❌ Please enter a valid number of days (e.g., 3 for 3 days).");
-    }
-    
-    const currentEnd = cfg.contestEnd;
-    const newEnd = currentEnd + (days * 24 * 60 * 60); // Add days in seconds
-    
-    cfg.contestEnd = newEnd;
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    reloadConfig();
-    adminStates.delete(chatId);
-    
-    const oldEndDate = new Date(currentEnd * 1000).toLocaleDateString('en-GB');
-    const newEndDate = new Date(newEnd * 1000).toLocaleDateString('en-GB');
-    
-    return bot.sendMessage(chatId, 
-      `✅ *Contest Extended!*\n\n` +
-      `• Extended by: ${days} day(s)\n` +
-      `• Old end date: ${oldEndDate}\n` +
-      `• New end date: ${newEndDate}\n\n` +
-      `Contest will now run longer!`,
-      { parse_mode: "Markdown" }
-    );
-  }
-
 
   /*  ── 3) /updatecontest – step 1 (delay) ── */
   if (state.mode === "contest_time") {
@@ -964,7 +864,7 @@ async function announceInGroup({ trw, sol, sendSig, dest }) {
 
   /* stop sending group messages after presale ends */
   const currentTime = Math.floor(Date.now() / 1e3);
-  if (currentTime < cfg.presaleStart || (!cfg.presaleEndDisabled && currentTime >= cfg.presaleEnd)) return;
+  if (currentTime < cfg.presaleStart || currentTime >= cfg.presaleEnd) return;
 
   /* core buy info */
   const formattedSol = formatDecimal(sol);
@@ -989,19 +889,13 @@ ${dynamicEmojis}
   if (contestActive()) {
     await updateContestParticipant(dest, sol);
     caption += "\n\n" + buildContestBlock();
-  } else if (contestWillStart()) {
-    const startDate = new Date(CONTEST_START_UNIX * 1000).toLocaleDateString('en-GB');
-    caption += `\n\n🚀 Contest will start on ${startDate}`;
   }
   // caption += "\n\n" + buildTokenBlock();     // NEW – token progress
 
   /* send with image (if available) */
   const imgPath = findImage();
-  const presaleTimeLeft = formatPresaleTimeLeft();
-  const finalCaption = presaleTimeLeft ? caption + `\n\n${presaleTimeLeft}` : caption;
-  
   const opts = { 
-    caption: finalCaption, 
+    caption: caption + `\n\n${formatPresaleTimeLeft()}`, 
     parse_mode: "HTML", 
     disable_web_page_preview: true,
     reply_markup: { 
@@ -1011,7 +905,7 @@ ${dynamicEmojis}
 
   try {
     if (imgPath) await bot.sendPhoto(cfg.groupid, imgPath, opts);
-    else         await bot.sendMessage(cfg.groupid, finalCaption, opts);
+    else         await bot.sendMessage(cfg.groupid, caption, opts);
     log("📣 Announced in group", cfg.groupid);
   } catch (e) {
     log("❌ group announce:", e.message);
@@ -1020,11 +914,6 @@ ${dynamicEmojis}
 /* ───────── /contest — show current status ───────── */
 bot.onText(/\/contest/, async ctx => {
   const chatId = ctx.chat.id;
-  
-  if (contestWillStart()) {
-    const startDate = new Date(CONTEST_START_UNIX * 1000).toLocaleDateString('en-GB');
-    return bot.sendMessage(chatId, `🚀 Contest will start on ${startDate}`, { parse_mode: "Markdown" });
-  }
   
   if (!contestActive()) {
     return bot.sendMessage(chatId, "🏆 Contest Ended", { parse_mode: "Markdown" });
@@ -1044,11 +933,6 @@ bot.onText(/\/contest/, async ctx => {
 /* ───────── /leaderboard — show contest rankings ───────── */
 bot.onText(/\/leaderboard/, async ctx => {
   const chatId = ctx.chat.id;
-  
-  if (contestWillStart()) {
-    const startDate = new Date(CONTEST_START_UNIX * 1000).toLocaleDateString('en-GB');
-    return bot.sendMessage(chatId, `🚀 Contest will start on ${startDate}`, { parse_mode: "Markdown" });
-  }
   
   if (!contestActive()) {
     return bot.sendMessage(chatId, "🏆 Contest Ended", { parse_mode: "Markdown" });
