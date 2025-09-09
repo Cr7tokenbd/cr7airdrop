@@ -251,6 +251,7 @@ let CONTEST_END_MS     = cfg.contestEnd * 1000;
 
 
 const progressFile = path.join(__dirname, "contest.json");
+const blockedWalletsFile = path.join(__dirname, "blocked_wallets.json");
 
 /* ensure file + schema */
 if (!fs.existsSync(progressFile))
@@ -262,6 +263,13 @@ if (!fs.existsSync(progressFile))
 const loadProgress = () => JSON.parse(fs.readFileSync(progressFile, "utf8"));
 const saveProgress = obj =>
   fs.writeFileSync(progressFile, JSON.stringify(obj, null, 2));
+
+const loadBlockedWallets = () => {
+  if (!fs.existsSync(blockedWalletsFile)) {
+    return { blockedWallets: [] };
+  }
+  return JSON.parse(fs.readFileSync(blockedWalletsFile, "utf8"));
+};
 
 /* track total + “spent ≥ 1 SOL at once” wallets */
 function addSolAndGetTotal(deltaSol, wallet) {
@@ -1052,6 +1060,15 @@ for (const dep of pending) {
   if (await tokenSvc.isDepositRewarded(depSig)) {
     await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
     trace(depSig, "already_rewarded_skip");
+    continue;
+  }
+
+  /* ---- SKIP if wallet is manually blocked ---- */
+  const blockedWallets = loadBlockedWallets();
+  if (blockedWallets.blockedWallets.includes(dep.from_addr)) {
+    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
+    trace(depSig, "wallet_manually_blocked");
+    log(`🚫 Wallet ${dep.from_addr} is manually blocked. Skipping token send.`);
     continue;
   }
 
