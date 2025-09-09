@@ -103,7 +103,7 @@ const reloadConfig = () => {
   PROGRESS_SOL_CAP   = cfg.progressSolCap || 100;
   CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
   CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
-  CONTEST_END_MS     = (cfg.contestEnd || cfg.presaleEnd) * 1000;
+  CONTEST_END_MS     = cfg.contestEnd * 1000;
 
   log("♻️  Config reloaded");
 };
@@ -165,8 +165,6 @@ bot.onText(/\/start/, async ctx => {
   const currentTime = Math.floor(Date.now() / 1e3);
   if (currentTime < cfg.presaleStart)
     return bot.sendMessage(chat, "🚀 Presale hasn't started yet!");
-  if (currentTime >= cfg.presaleEnd)
-    return bot.sendMessage(chat, "⏰ Presale has ended!");
 
   await bot.sendMessage(chat, msg.WELCOME, { 
     parse_mode: "HTML",
@@ -248,7 +246,7 @@ bot.onText(/\/admin/, async ctx => {
 let PROGRESS_SOL_CAP   = cfg.progressSolCap || 100;                // ← from config
 let CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
 let CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
-let CONTEST_END_MS     = (cfg.contestEnd || cfg.presaleEnd) * 1000;
+let CONTEST_END_MS     = cfg.contestEnd * 1000;
 
 
 
@@ -306,18 +304,6 @@ const formatTimeLeft = () => {
   return `${d}d ${h}h ${m}m ${s}s`;
 };
 
-const formatPresaleTimeLeft = () => {
-  let ms = (cfg.presaleEnd * 1000) - Date.now();
-  if (ms <= 0) return "Presale Ended";
-  const d = Math.floor(ms / 864e5);   ms %= 864e5;
-  const h = Math.floor(ms / 36e5);    ms %= 36e5;
-  const m = Math.floor(ms / 6e4);     ms %= 6e4;
-  const s = Math.floor(ms / 1e3);
-  return `Presale Ends In:
-• 📅 ${d} days
-• 🕐 ${h}h
-• ⏱️ ${m}m ${s}s`;
-};
 
 const formatContestTimeLeft = () => {
   let ms = CONTEST_END_MS - Date.now();
@@ -458,16 +444,6 @@ bot.on("callback_query", async ({ message, data, id }) => {
     );
   }
 
-  /*  Set Presale End Date button  */
-  if (data === "setenddate" && cfg.adminIds.includes(chatId)) {
-    await bot.answerCallbackQuery(id);
-    adminStates.set(chatId, { mode: "setenddate" });
-    await bot.sendMessage(
-      chatId,
-      "📅 *Set Presale End Date*\n\nSend date in format: **DD/MM/YYYY**\nExample: `29/09/2025`",
-      { parse_mode: "Markdown", reply_markup: { force_reply: true } }
-    );
-  }
 
   /*  Set Contest Start Date button  */
   if (data === "setconteststart" && cfg.adminIds.includes(chatId)) {
@@ -610,25 +586,6 @@ bot.on("message", async msg => {
     });
   }
 
-  /*  ── 3) Set Presale End Date ── */
-  if (state.mode === "setenddate") {
-    const dateText = msg.text.trim();
-    const timestamp = parseDateToTimestamp(dateText);
-    
-    if (!timestamp) {
-      return bot.sendMessage(chatId, "❌ Invalid date format. Use DD/MM/YYYY (e.g., 29/09/2025)");
-    }
-    
-    cfg.presaleEnd = timestamp;
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    reloadConfig();
-    adminStates.delete(chatId);
-    
-    const readableDate = new Date(timestamp * 1000).toLocaleDateString('en-GB');
-    return bot.sendMessage(chatId, `✅ *Presale End Date* updated to \`${readableDate}\` (${timestamp})`, {
-      parse_mode: "Markdown"
-    });
-  }
 
   /*  ── 4) Set Contest Start Date ── */
   if (state.mode === "setconteststart") {
@@ -862,9 +819,9 @@ function formatDecimal(value) {
 async function announceInGroup({ trw, sol, sendSig, dest }) {
   if (!cfg.groupid) return;
 
-  /* stop sending group messages after presale ends */
+  /* stop sending group messages before presale starts */
   const currentTime = Math.floor(Date.now() / 1e3);
-  if (currentTime < cfg.presaleStart || currentTime >= cfg.presaleEnd) return;
+  if (currentTime < cfg.presaleStart) return;
 
   /* core buy info */
   const formattedSol = formatDecimal(sol);
@@ -895,7 +852,7 @@ ${dynamicEmojis}
   /* send with image (if available) */
   const imgPath = findImage();
   const opts = { 
-    caption: caption + `\n\n${formatPresaleTimeLeft()}`, 
+    caption: caption, 
     parse_mode: "HTML", 
     disable_web_page_preview: true,
     reply_markup: { 
