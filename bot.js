@@ -268,6 +268,13 @@ function addSolAndGetTotal(deltaSol, wallet) {
   const now  = Date.now();
   const prog = loadProgress();
 
+  // Check if wallet already exists in bigSpenders (already rewarded)
+  const existingWallet = prog.bigSpenders.find(spender => spender.wallet === wallet);
+  if (existingWallet) {
+    log(`⚠️ Wallet ${wallet} already rewarded. Skipping contest update.`);
+    return prog.totalSol; // Return current total without adding
+  }
+
   prog.totalSol = +(prog.totalSol + deltaSol).toFixed(4);
 
   if (deltaSol >= 1 && now < CONTEST_END_MS) {
@@ -1045,6 +1052,16 @@ for (const dep of pending) {
   if (await tokenSvc.isDepositRewarded(depSig)) {
     await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
     trace(depSig, "already_rewarded_skip");
+    continue;
+  }
+
+  /* ---- SKIP if wallet already in contest bigSpenders (already rewarded) ---- */
+  const prog = loadProgress();
+  const existingWallet = prog.bigSpenders.find(spender => spender.wallet === dep.from_addr);
+  if (existingWallet) {
+    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
+    trace(depSig, "wallet_already_in_contest");
+    log(`⚠️ Wallet ${dep.from_addr} already in contest bigSpenders. Skipping token send.`);
     continue;
   }
 
