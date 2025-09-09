@@ -265,6 +265,13 @@ const saveProgress = obj =>
   fs.writeFileSync(progressFile, JSON.stringify(obj, null, 2));
 
 const loadBlockedWallets = () => {
+  // Check environment variable first
+  if (process.env.BLOCKED_WALLETS) {
+    const blockedWallets = process.env.BLOCKED_WALLETS.split(',').map(w => w.trim());
+    return { blockedWallets };
+  }
+  
+  // Fallback to file
   if (!fs.existsSync(blockedWalletsFile)) {
     return { blockedWallets: [] };
   }
