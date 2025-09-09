@@ -264,24 +264,33 @@ const loadProgress = () => JSON.parse(fs.readFileSync(progressFile, "utf8"));
 const saveProgress = obj =>
   fs.writeFileSync(progressFile, JSON.stringify(obj, null, 2));
 
+// Cache blocked wallets to avoid repeated loading
+let blockedWalletsCache = null;
+
 const loadBlockedWallets = () => {
-  // Check environment variable first
-  log(`🔍 Checking environment variable BLOCKED_WALLETS: ${process.env.BLOCKED_WALLETS ? 'EXISTS' : 'NOT_FOUND'}`);
+  // Return cached result if available
+  if (blockedWalletsCache) {
+    return blockedWalletsCache;
+  }
   
+  // Check environment variable first
   if (process.env.BLOCKED_WALLETS) {
     const blockedWallets = process.env.BLOCKED_WALLETS.split(',').map(w => w.trim());
     log(`🔒 Loaded ${blockedWallets.length} blocked wallets from environment variable`);
-    return { blockedWallets };
+    blockedWalletsCache = { blockedWallets };
+    return blockedWalletsCache;
   }
   
   // Fallback to file
   if (!fs.existsSync(blockedWalletsFile)) {
     log(`⚠️ No blocked wallets found - using empty list`);
-    return { blockedWallets: [] };
+    blockedWalletsCache = { blockedWallets: [] };
+    return blockedWalletsCache;
   }
   const fileData = JSON.parse(fs.readFileSync(blockedWalletsFile, "utf8"));
   log(`🔒 Loaded ${fileData.blockedWallets.length} blocked wallets from file`);
-  return fileData;
+  blockedWalletsCache = fileData;
+  return blockedWalletsCache;
 };
 
 /* track total + “spent ≥ 1 SOL at once” wallets */
