@@ -1037,6 +1037,12 @@ async function processLoop() {
       if (tx.timestamp < cfg.presaleStart) {
         continue;
       }
+
+      // Only process transactions from current time onwards (not past transactions)
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (tx.timestamp < currentTime) {
+        continue;
+      }
       
       for (const tr of tx.nativeTransfers) {
         if (tr.toUserAccount !== cfg.motherWallet) continue;
@@ -1045,18 +1051,22 @@ async function processLoop() {
 
         // Check if wallet is blocked before adding to database
         const blockedWallets = loadBlockedWallets();
+        log(`🔍 Checking wallet ${tr.fromUserAccount} against ${blockedWallets.blockedWallets.length} blocked wallets`);
         if (blockedWallets.blockedWallets.includes(tr.fromUserAccount)) {
           log("🚫 Blocked wallet detected, skipping:", tr.fromUserAccount, sol, "SOL");
           continue;
         }
 
-        const added = await sqlRun(
-          `INSERT OR IGNORE INTO deposits
-             (signature, from_addr, amount_sol, ts)
-           VALUES (?, ?, ?, ?)`,
-          [sig, tr.fromUserAccount, sol, tx.timestamp]
-        );
-        if (added.changes) log("➕ New qualifying deposit", sig, sol, "SOL");
+        // Only add to database if transaction is from current time onwards
+        if (tx.timestamp >= currentTime) {
+          const added = await sqlRun(
+            `INSERT OR IGNORE INTO deposits
+               (signature, from_addr, amount_sol, ts)
+             VALUES (?, ?, ?, ?)`,
+            [sig, tr.fromUserAccount, sol, tx.timestamp]
+          );
+          if (added.changes) log("➕ New qualifying deposit", sig, sol, "SOL");
+        }
       }
     }
 
