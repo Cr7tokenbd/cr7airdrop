@@ -247,6 +247,7 @@ let PROGRESS_SOL_CAP   = cfg.progressSolCap || 100;                // ← from c
 let CONTEST_START_UNIX = cfg.contestStart || cfg.presaleStart || Math.floor(Date.now() / 1e3);
 let CONTEST_DAYS       = Math.ceil((cfg.contestEnd - cfg.contestStart) / 86400) || 2;
 let CONTEST_END_MS     = cfg.contestEnd * 1000;
+let BOT_START_TIME     = Math.floor(Date.now() / 1000); // Store bot start time
 
 
 
@@ -1001,9 +1002,8 @@ async function processLoop() {
         continue;
       }
 
-      // Only process transactions from current time onwards (not past transactions)
-      const currentTime = Math.floor(Date.now() / 1000);
-      if (tx.timestamp < currentTime) {
+      // Only process transactions from bot start time onwards (not past transactions)
+      if (tx.timestamp < BOT_START_TIME) {
         continue;
       }
       
@@ -1014,8 +1014,8 @@ async function processLoop() {
 
         // No need to check blocked wallets - bot only processes new transactions after start
 
-        // Only add to database if transaction is from current time onwards
-        if (tx.timestamp >= currentTime) {
+        // Add to database if transaction is from bot start time onwards
+        if (tx.timestamp >= BOT_START_TIME) {
           const added = await sqlRun(
             `INSERT OR IGNORE INTO deposits
                (signature, from_addr, amount_sol, ts)
@@ -1154,6 +1154,7 @@ for (const dep of pending) {
 // Startup safety check
 async function startupCheck() {
   log("🚀 Bot starting up - performing safety checks...");
+  log(`⏰ Bot start time: ${new Date(BOT_START_TIME * 1000).toISOString()}`);
   
   // Check if there are any unprocessed deposits that might be duplicates
   const unprocessed = await sqlAll(`SELECT COUNT(*) as count FROM deposits WHERE processed = 0`);
