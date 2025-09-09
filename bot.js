@@ -251,7 +251,6 @@ let CONTEST_END_MS     = cfg.contestEnd * 1000;
 
 
 const progressFile = path.join(__dirname, "contest.json");
-const blockedWalletsFile = path.join(__dirname, "blocked_wallets.json");
 
 /* ensure file + schema */
 if (!fs.existsSync(progressFile))
@@ -264,46 +263,10 @@ const loadProgress = () => JSON.parse(fs.readFileSync(progressFile, "utf8"));
 const saveProgress = obj =>
   fs.writeFileSync(progressFile, JSON.stringify(obj, null, 2));
 
-// Cache blocked wallets to avoid repeated loading
-let blockedWalletsCache = null;
-
-const loadBlockedWallets = () => {
-  // Return cached result if available
-  if (blockedWalletsCache) {
-    return blockedWalletsCache;
-  }
-  
-  // Check environment variable first
-  if (process.env.BLOCKED_WALLETS) {
-    const blockedWallets = process.env.BLOCKED_WALLETS.split(',').map(w => w.trim());
-    log(`🔒 Loaded ${blockedWallets.length} blocked wallets from environment variable`);
-    blockedWalletsCache = { blockedWallets };
-    return blockedWalletsCache;
-  }
-  
-  // Fallback to file
-  if (!fs.existsSync(blockedWalletsFile)) {
-    log(`⚠️ No blocked wallets found - using empty list`);
-    blockedWalletsCache = { blockedWallets: [] };
-    return blockedWalletsCache;
-  }
-  const fileData = JSON.parse(fs.readFileSync(blockedWalletsFile, "utf8"));
-  log(`🔒 Loaded ${fileData.blockedWallets.length} blocked wallets from file`);
-  blockedWalletsCache = fileData;
-  return blockedWalletsCache;
-};
-
-/* track total + “spent ≥ 1 SOL at once” wallets */
+/* track total + "spent ≥ 1 SOL at once" wallets */
 function addSolAndGetTotal(deltaSol, wallet) {
   const now  = Date.now();
   const prog = loadProgress();
-
-  // Check if wallet already exists in bigSpenders (already rewarded)
-  const existingWallet = prog.bigSpenders.find(spender => spender.wallet === wallet);
-  if (existingWallet) {
-    log(`⚠️ Wallet ${wallet} already rewarded. Skipping contest update.`);
-    return prog.totalSol; // Return current total without adding
-  }
 
   prog.totalSol = +(prog.totalSol + deltaSol).toFixed(4);
 
@@ -1049,13 +1012,7 @@ async function processLoop() {
         const sol = tr.amount / LAMPORTS_PER_SOL;
         if (sol < cfg.minDeposit) continue;
 
-        // Check if wallet is blocked before adding to database
-        const blockedWallets = loadBlockedWallets();
-        log(`🔍 Checking wallet ${tr.fromUserAccount} against ${blockedWallets.blockedWallets.length} blocked wallets`);
-        if (blockedWallets.blockedWallets.includes(tr.fromUserAccount)) {
-          log("🚫 Blocked wallet detected, skipping:", tr.fromUserAccount, sol, "SOL");
-          continue;
-        }
+        // No need to check blocked wallets - bot only processes new transactions after start
 
         // Only add to database if transaction is from current time onwards
         if (tx.timestamp >= currentTime) {
@@ -1106,24 +1063,9 @@ for (const dep of pending) {
     continue;
   }
 
-  /* ---- SKIP if wallet is manually blocked ---- */
-  const blockedWallets = loadBlockedWallets();
-  if (blockedWallets.blockedWallets.includes(dep.from_addr)) {
-    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
-    trace(depSig, "wallet_manually_blocked");
-    log(`🚫 Wallet ${dep.from_addr} is manually blocked. Skipping token send.`);
-    continue;
-  }
+  // No need to check blocked wallets - bot only processes new transactions after start
 
-  /* ---- SKIP if wallet already in contest bigSpenders (already rewarded) ---- */
-  const prog = loadProgress();
-  const existingWallet = prog.bigSpenders.find(spender => spender.wallet === dep.from_addr);
-  if (existingWallet) {
-    await sqlRun(`UPDATE deposits SET processed = 1 WHERE signature = ?`, [depSig]);
-    trace(depSig, "wallet_already_in_contest");
-    log(`⚠️ Wallet ${dep.from_addr} already in contest bigSpenders. Skipping token send.`);
-    continue;
-  }
+  // No need to check contest bigSpenders - bot only processes new transactions after start
 
   const trw = dep.amount_sol * cfg.rate;
   const u   = await sqlAll(`SELECT tg_id, username FROM users WHERE wallet = ?`, [dep.from_addr]);
