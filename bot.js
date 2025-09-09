@@ -1043,7 +1043,10 @@ function trace(sig, step, extra = {}) {
   fs.writeFileSync(fp, JSON.stringify(log, null, 2));
 }
 
-const pending = await sqlAll(`SELECT * FROM deposits WHERE processed = 0`);
+// Only process transactions from last 5 minutes
+const currentTime = Math.floor(Date.now() / 1000);
+const fiveMinutesAgo = currentTime - (5 * 60);
+const pending = await sqlAll(`SELECT * FROM deposits WHERE processed = 0 AND ts >= ?`, [fiveMinutesAgo]);
 for (const dep of pending) {
   const depSig = dep.signature;
   trace(depSig, "start", { sol: dep.amount_sol, from: dep.from_addr });
@@ -1055,6 +1058,7 @@ for (const dep of pending) {
     log(`⏭️ Skipping transaction before presale start: ${depSig}`);
     continue;
   }
+
 
   /* ---- SKIP if already rewarded (safety when bot restarts) ---- */
   if (await tokenSvc.isDepositRewarded(depSig)) {
