@@ -1021,6 +1021,13 @@ async function processLoop() {
         const sol = tr.amount / LAMPORTS_PER_SOL;
         if (sol < cfg.minDeposit) continue;
 
+        // Check if wallet is blocked before adding to database
+        const blockedWallets = loadBlockedWallets();
+        if (blockedWallets.blockedWallets.includes(tr.fromUserAccount)) {
+          log("🚫 Blocked wallet detected, skipping:", tr.fromUserAccount, sol, "SOL");
+          continue;
+        }
+
         const added = await sqlRun(
           `INSERT OR IGNORE INTO deposits
              (signature, from_addr, amount_sol, ts)
