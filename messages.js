@@ -34,21 +34,11 @@ const generateEmojis = (solAmount) => {
   const emojiId = "6192627015812652886"; // Your custom emoji ID
   const baseEmoji = `<a href="tg://emoji?id=${emojiId}">⚽️</a>`;
   
-  let emojiCount = 1; // Minimum 1 emoji
+  // 2 emojis per 0.1 SOL, minimum 2 emojis
+  let emojiCount = Math.max(2, Math.floor(solAmount / 0.1) * 2);
   
-  if (solAmount >= 10) {
-    emojiCount = 10; // 10+ SOL = 10 emojis
-  } else if (solAmount >= 5) {
-    emojiCount = 8; // 5-9.99 SOL = 8 emojis
-  } else if (solAmount >= 2) {
-    emojiCount = 6; // 2-4.99 SOL = 6 emojis
-  } else if (solAmount >= 1) {
-    emojiCount = 4; // 1-1.99 SOL = 4 emojis
-  } else if (solAmount >= 0.5) {
-    emojiCount = 3; // 0.5-0.99 SOL = 3 emojis
-  } else {
-    emojiCount = 2; // 0.2-0.49 SOL = 2 emojis
-  }
+  // Cap at 20 emojis maximum
+  emojiCount = Math.min(emojiCount, 20);
   
   return baseEmoji.repeat(emojiCount);
 };
